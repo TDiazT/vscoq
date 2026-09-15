@@ -55,13 +55,20 @@ let logs = ref []
 
 let handle_event s = Printf.eprintf "%s\n" s
 
+type level = Debug | Info | Error
+
+let string_of_level = function
+  | Debug -> "DEBUG"
+  | Info -> "INFO"
+  | Error -> "ERROR"
+
 let mk_log name =
   logs := name :: !logs;
   let flag = is_enabled_env name (try Sys.getenv "VSROCQ_ARGS" with Not_found -> "") in
   let flag = flag || is_enabled name (Array.to_list Sys.argv) in
   let flag_init = is_enabled "init" (Array.to_list Sys.argv) in
   write_to_init_log ("log fun () -> " ^ name ^ " is " ^ if flag then "on" else "off");
-  Log (fun ?(force=false) msg ->
+  Log (fun ?(level=Debug) msg ->
     let msg =
       try msg ()
       with
@@ -73,12 +80,15 @@ let mk_log name =
         let e = Exninfo.capture e in
         let message = Pp.string_of_ppcmds @@ CErrors.iprint e in
         Format.asprintf "Error while printing: %s" message in
-    let should_print_log = force || flag || (flag_init && not !lsp_initialization_done) in
+    let should_print_log = match level with
+      | Debug -> flag || (flag_init && not !lsp_initialization_done)
+      | Info | Error -> true in
     if should_print_log then begin
-      let txt = Format.asprintf "[%-20s, %d, %f] %s" name (Unix.getpid ()) (Unix.gettimeofday ()) msg in
+      let txt = Format.asprintf "[%5s, %-20s, %d, %f] %s" (string_of_level level) name (Unix.getpid ()) (Unix.gettimeofday ()) msg in
       if not !lsp_initialization_done then begin
         write_to_init_log txt;
-        Queue.push txt initialization_feedback_queue (* Emission must be delayed as per LSP spec *)
+        if level = Error then handle_event txt
+        else Queue.push txt initialization_feedback_queue (* Emission must be delayed as per LSP spec *)
       end else
         handle_event txt
     end else

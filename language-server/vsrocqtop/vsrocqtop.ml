@@ -39,9 +39,9 @@ let loop () =
   try loop todo
   with exn ->
     let info = Exninfo.capture exn in
-    log ~force:true (fun () -> "==========================================================");
-    log ~force:true (fun () -> Pp.string_of_ppcmds @@ CErrors.iprint_no_report info);
-    log ~force:true (fun () -> "==========================================================")
+    log ~level:Dm.Log.Error (fun () -> "==========================================================");
+    log ~level:Dm.Log.Error (fun () -> Pp.string_of_ppcmds @@ CErrors.iprint_no_report info);
+    log ~level:Dm.Log.Error (fun () -> "==========================================================")
 
 [%%if rocq = "8.18" || rocq = "8.19" || rocq = "8.20"]
 let _ =

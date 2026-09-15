@@ -124,7 +124,7 @@ let hover_of_sentence pattern = function
         Language.Hover.get_hover_contents env sigma ref_or_by_not
       with e ->
         let e, info = Exninfo.capture e in
-        log (fun () -> "Exception while handling hover: " ^ (Pp.string_of_ppcmds @@ CErrors.iprint (e, info)));
+        log ~level:Log.Error (fun () -> "Exception while handling hover: " ^ (Pp.string_of_ppcmds @@ CErrors.iprint (e, info)));
         None
 
 let hover document pos =

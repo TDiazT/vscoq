@@ -380,7 +380,7 @@ let update_checked parsed (id, v) =
           { parsed with sentences_by_id = SM.add id { s with checked = Some v} parsed.sentences_by_id }
       | Some (Success _) when is_qed ast ->
           { parsed with sentences_by_id = SM.add id { s with checked = Some v} parsed.sentences_by_id }
-      | _ -> log (fun () -> "Ignoring bad update for checked status, possibly a bug"); parsed
+      | _ -> log ~level:Log.Error (fun () -> "Ignoring bad update for checked status, possibly a bug"); parsed
 
 let set_unchecked parsed id =
   match SM.find_opt id parsed.sentences_by_id with

@@ -37,7 +37,7 @@ let abort_on_unix_error f x =
   try
     f x
   with Unix.Unix_error(e,f,p) ->
-    Printf.eprintf "Error: %s: %s: %s\n%!" f p (Unix.error_message e);
+    log ~level:Log.Error (fun () -> Printf.sprintf "Error: %s: %s: %s" f p (Unix.error_message e));
     exit 3
 
 
@@ -105,7 +105,7 @@ module type Worker = sig
   val setup_plumbing : options -> ((job_update_request -> unit) * job_t)
   
   (* CDebug aware print *)
-  val log : ?force:bool -> (unit -> string) -> unit
+  val log : ?level:Log.level -> (unit -> string) -> unit
     
 end
 
@@ -343,7 +343,7 @@ let parse_options extra_args =
   match extra_args with
   | [ o ; port ] when o = option_name -> int_of_string port, []
   | _ ->
-    Printf.eprintf "unknown arguments: %s" (String.concat " " extra_args);
+    log_worker ~level:Log.Error (fun () -> "unknown arguments: " ^ String.concat " " extra_args);
     exit 2
 
 [%%if rocq = "8.18" || rocq = "8.19" || rocq = "8.20"]
