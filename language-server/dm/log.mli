@@ -12,9 +12,17 @@
 (*                                                                        *)
 (**************************************************************************)
 
-open Types
+(* One logger per source. [debug] lines print only when the source is
+   selected with -vsrocq-d (or VSROCQ_ARGS); [info] and [error] lines print
+   regardless. Before the initialize response every line is held back,
+   except [error] lines, which go to stderr at once. *)
+type t = {
+  debug : (unit -> string) -> unit;
+  info : (unit -> string) -> unit;
+  error : (unit -> string) -> unit;
+}
 
-val mk_log : string -> (?force:bool -> (unit -> string) -> unit) log
+val mk_log : string -> t
 val logs : unit -> string list
 
 type event = string
