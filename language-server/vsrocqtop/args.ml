@@ -79,11 +79,11 @@ let get_local_args dir =
     in
     match project_file with
     | None ->
-      log.debug (fun () -> Printf.sprintf "No project file found for %s" dir);
+      log.info (fun () -> Printf.sprintf "No project file found for %s" dir);
       parse_args_default ()
     | Some f ->
       let project = CoqProject_file.read_project_file ~warning_fn:(fun _ -> ()) f in
       let args = CoqProject_file.coqtop_args_from_project project in
-      log.debug (fun () -> Printf.sprintf "Arguments from project file %s: %s" f (String.concat " " args));
+      log.info (fun () -> Printf.sprintf "Arguments from project file %s: %s" f (String.concat " " args));
       parse_args_with_rocq_project args
   )

@@ -229,7 +229,7 @@ let jump_to_definition document vs pos  =
             end
         with e ->
           let e, info = Exninfo.capture e in
-          log.debug (fun () -> Pp.string_of_ppcmds @@ CErrors.iprint (e, info)); None
+          log.error (fun () -> Pp.string_of_ppcmds @@ CErrors.iprint (e, info)); None
 
 [%%endif]
 

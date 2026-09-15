@@ -76,7 +76,7 @@ let lsp : event Sel.Event.t =
           LspManagerEvent (Receive None)
       end
     | Error exn ->
-        log.debug (fun () -> ("failed to read message: " ^ Printexc.to_string exn));
+        log.error (fun () -> ("failed to read message: " ^ Printexc.to_string exn));
         (* do not remove this line otherwise the server stays running in some scenarios *)
         exit 0)
 
@@ -149,7 +149,7 @@ let send_configuration_request () =
 let do_initialize id params =
   let Lsp.Types.InitializeParams.{ initializationOptions } = params in
   begin match initializationOptions with
-  | None -> log.debug (fun () -> "Failed to decode initialization options")
+  | None -> log.error (fun () -> "Failed to decode initialization options")
   | Some initializationOptions ->
     do_configuration @@ Settings.t_of_yojson initializationOptions;
   end;
@@ -327,7 +327,7 @@ let purge_invisible_tabs () =
   Hashtbl.filter_map_inplace (fun u ({ visible } as v) ->
     if visible then Some v
     else begin
-      log.debug (fun () -> "purging tab " ^ u);
+      log.info (fun () -> "purging tab " ^ u);
       None
     end)
   states
@@ -341,7 +341,7 @@ let consider_purge_invisible_tabs () =
     Vernacstate.Interp.invalidate_cache ();
     Gc.compact ();
     let new_usage = current_memory_usage () in
-    log.debug (fun () -> Printf.sprintf  "memory footprint %d -> %d" usage new_usage);
+    log.info (fun () -> Printf.sprintf  "memory footprint %d -> %d" usage new_usage);
   end
 
 let textDocumentDidClose params =
@@ -632,7 +632,7 @@ let handle_lsp_event = function
       | Request req ->
           log.debug (fun () -> "ui request: " ^ req.method_);
           begin match Request.Client.t_of_jsonrpc req with
-          | Error(e) -> log.debug (fun () -> "Error decoding request: " ^ e); []
+          | Error(e) -> log.error (fun () -> "Error decoding request: " ^ e); []
           | Ok(Pack r) ->
             let resp, events = dispatch_request req.id r in
             begin match resp with
@@ -648,7 +648,7 @@ let handle_lsp_event = function
       | Notification notif ->
         begin match Notification.Client.of_jsonrpc notif with
         | Ok notif -> dispatch_notification notif
-        | Error e -> log.debug (fun () -> "error decoding notification: " ^ e); []
+        | Error e -> log.error (fun () -> "error decoding notification: " ^ e); []
         end
       | Response resp ->
           log.debug (fun () -> "got unknown response");
@@ -657,7 +657,7 @@ let handle_lsp_event = function
       | Batch_call _ -> log.debug (fun () -> "Unsupported batch call received"); []
       end
     with Ppx_yojson_conv_lib__Yojson_conv.Of_yojson_error(exn,json) ->
-      log.debug (fun () -> "error parsing json: " ^ Yojson.Safe.pretty_to_string json);
+      log.error (fun () -> "error parsing json: " ^ Yojson.Safe.pretty_to_string json);
       []
     end
   | Send jsonrpc ->

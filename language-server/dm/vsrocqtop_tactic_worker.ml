@@ -22,8 +22,8 @@ let main_worker options ~opts:_ state =
   try Dm.ParTactic.TacticWorkerProcess.main ~st:initial_vernac_state options
   with exn ->
     let bt = Printexc.get_backtrace () in
-    log.debug (fun () -> Printexc.(to_string exn));
-    log.debug (fun () -> bt);
+    log.error (fun () -> Printexc.(to_string exn));
+    log.error (fun () -> bt);
     flush_all ()
 
 let vsrocqtop_specific_usage = Boot.Usage.{

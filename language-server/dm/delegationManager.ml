@@ -220,7 +220,7 @@ let fork_worker : feedback_cleanup:feedback_cleanup -> int option ref -> (role *
       match accept_timeout chan with
       | None ->
           close chan;
-          log.debug (fun () -> Printf.sprintf "forked pid %d did not connect back" pid);
+          log.error (fun () -> Printf.sprintf "forked pid %d did not connect back" pid);
           Unix.kill pid 9;
           Error ("worker did not connect back", [worker_ends pid])
       | Some (worker, _worker_addr) ->
@@ -267,7 +267,7 @@ let create_process_worker procname cancellation_handle job =
         log.debug (fun () -> "sent");
         Ok [worker_progress link; worker_ends pid]
     | None ->
-        log.debug (fun () -> Printf.sprintf "child process %d did not connect back" pid);
+        log.error (fun () -> Printf.sprintf "child process %d did not connect back" pid);
         Unix.kill pid 9;
         Error ("worker did not connect back", [worker_ends pid])
   with Unix_error(e,f,p) ->
@@ -278,7 +278,7 @@ let create_process_worker procname cancellation_handle job =
 
 let handle_event = function
   | WorkerIOError e ->
-     log.debug (fun () -> "worker IO Error: " ^ Printexc.to_string e);
+     log.error (fun () -> "worker IO Error: " ^ Printexc.to_string e);
      if Queue.length pool < !current_pool_size then
       Queue.push () pool;
      (None, [])
@@ -304,7 +304,7 @@ let handle_event = function
         action job ~send_back:(fun j -> abort_on_unix_error write_value link (Job_update j));
         exit 0
       | Error(msg, cleanup_events) ->
-        log.debug (fun () -> "worker did not spawn: " ^ msg);
+        log.error (fun () -> "worker did not spawn: " ^ msg);
         (Some(Job.appendFeedback feedback_route (Feedback.Error,None,[],Pp.str msg)), cleanup_events)
     else
       match create_process_worker procname cancellation_handle job with
@@ -312,7 +312,7 @@ let handle_event = function
           log.debug (fun () -> "worker spawned (create_process)");
           (None, events)
       | Error(msg, cleanup_events) ->
-          log.debug (fun () -> "worker did not spawn: " ^ msg);
+          log.error (fun () -> "worker did not spawn: " ^ msg);
           (Some(Job.appendFeedback feedback_route (Feedback.Error,None,[],Pp.str msg)), cleanup_events)
 
 
@@ -333,10 +333,10 @@ let setup_plumbing port =
     match Sel.(pop Todo.(add empty [Sel.On.ocaml_value read_from (fun x -> x)])) with
     | Ok (job : Job.t), _ -> ((fun x -> write_value link (Job_update x)), job)
     | Error exn, _ ->
-      log_worker.debug (fun () -> "error receiving job: " ^ Printexc.to_string exn);
+      log_worker.error (fun () -> "error receiving job: " ^ Printexc.to_string exn);
       exit 1
   with Unix.Unix_error(code,syscall,param) ->
-    log_worker.debug (fun () -> Printf.sprintf "error starting: %s: %s: %s" syscall param (Unix.error_message code));
+    log_worker.error (fun () -> Printf.sprintf "error starting: %s: %s: %s" syscall param (Unix.error_message code));
     exit 1
 
 let parse_options extra_args =
