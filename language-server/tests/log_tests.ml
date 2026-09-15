@@ -25,13 +25,13 @@ let with_captured_stderr f =
 (* The test binary is started without -vsrocq-d, so this source is not
    selected and, since nobody answers an initialize request here, the logger
    is in its pre-initialization state until the test below flips it. *)
-let Types.Log log = Log.mk_log "log_tests"
+let log = Log.mk_log "log_tests"
 
 let%test_unit "levels: before initialization only Error reaches stderr" =
   let out = with_captured_stderr (fun () ->
-    log (fun () -> "debug line, source off");
-    log ~level:Log.Info (fun () -> "info line, held back");
-    log ~level:Log.Error (fun () -> "error line, printed at once")) in
+    log.debug (fun () -> "debug line, source off");
+    log.info (fun () -> "info line, held back");
+    log.error (fun () -> "error line, printed at once")) in
   [%test_eq: bool] (String.is_substring out ~substring:"debug line") false;
   [%test_eq: bool] (String.is_substring out ~substring:"info line") false;
   [%test_eq: bool] (String.is_substring out ~substring:"[ERROR, log_tests") true;
@@ -46,7 +46,7 @@ let%test_unit "levels: initialization releases Info, Debug stays gated" =
   [%test_eq: bool] (String.is_substring flushed ~substring:"[ INFO, log_tests") true;
   [%test_eq: bool] (String.is_substring flushed ~substring:"info line, held back") true;
   let out = with_captured_stderr (fun () ->
-    log (fun () -> "debug line, still off");
-    log ~level:Log.Info (fun () -> "info line, printed at once")) in
+    log.debug (fun () -> "debug line, still off");
+    log.info (fun () -> "info line, printed at once")) in
   [%test_eq: bool] (String.is_substring out ~substring:"debug line") false;
   [%test_eq: bool] (String.is_substring out ~substring:"info line, printed at once") true

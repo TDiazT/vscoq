@@ -23,7 +23,7 @@ open EConstr
 open Names
 open Types
 
-let Log log = Log.mk_log "completionSuggester"
+let log = Log.mk_log "completionSuggester"
 
 module TypeCompare = struct
   type t = types
@@ -287,7 +287,7 @@ module SelectiveUnification = struct
       try 
         aux 0 (of_constr lemma.typ)
       with e ->
-        log ~level:Log.Error (fun () -> Printf.sprintf "Error in Split Unification: %s for %s\n%!" (Printexc.to_string e) (Pp.string_of_ppcmds (pr_global lemma.ref)));
+        log.error (fun () -> Printf.sprintf "Error in Split Unification: %s for %s\n%!" (Printexc.to_string e) (Pp.string_of_ppcmds (pr_global lemma.ref)));
         ({lemma with completes = Some No_completion}, worst_value)
      in
     lemmas
@@ -300,7 +300,7 @@ module SelectiveUnification = struct
       let take, skip = takeSkip options.unificationLimit lemmas in
       List.append (rankByUnifiability goal sigma env take) skip
     with e ->
-      log ~level:Log.Error (fun () -> "Error in Split Unification: %s" ^ (Printexc.to_string e));
+      log.error (fun () -> "Error in Split Unification: %s" ^ (Printexc.to_string e));
       lemmas
 
   let rank = selectiveRank
@@ -327,7 +327,7 @@ let get_completion_items env proof lemmas options =
     | Some (goal, sigma, env, goal_evar) ->
         rank_choices options (goal, goal_evar) sigma env lemmas
   with e -> 
-    log ~level:Log.Error (fun () -> "Ranking of lemmas failed: " ^ (Printexc.to_string e));
+    log.error (fun () -> "Ranking of lemmas failed: " ^ (Printexc.to_string e));
     lemmas
 
 [%%if rocq = "8.18"]

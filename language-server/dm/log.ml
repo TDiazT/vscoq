@@ -12,8 +12,6 @@
 (*                                                                        *)
 (**************************************************************************)
 
-open Types
-
 let lsp_initialization_done = ref false
 let initialization_feedback_queue = Queue.create ()
 
@@ -57,6 +55,12 @@ let handle_event s = Printf.eprintf "%s\n" s
 
 type level = Debug | Info | Error
 
+type t = {
+  debug : (unit -> string) -> unit;
+  info : (unit -> string) -> unit;
+  error : (unit -> string) -> unit;
+}
+
 let string_of_level = function
   | Debug -> "DEBUG"
   | Info -> "INFO"
@@ -68,7 +72,7 @@ let mk_log name =
   let flag = flag || is_enabled name (Array.to_list Sys.argv) in
   let flag_init = is_enabled "init" (Array.to_list Sys.argv) in
   write_to_init_log ("log fun () -> " ^ name ^ " is " ^ if flag then "on" else "off");
-  Log (fun ?(level=Debug) msg ->
+  let emit level msg =
     let msg =
       try msg ()
       with
@@ -92,7 +96,9 @@ let mk_log name =
       end else
         handle_event txt
     end else
-      ())
+      ()
+  in
+  { debug = emit Debug; info = emit Info; error = emit Error }
 
 let logs () = List.sort String.compare !logs
 
